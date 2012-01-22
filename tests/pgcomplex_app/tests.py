@@ -17,6 +17,7 @@ class DoublePrecisionArrayFieldTest(TestCase):
         self.p1 = DoubleModel.objects.create(lista=[1.2,2.3,3.4,4.5,5.6])
         self.p2 = DoubleModel.objects.create(lista=[11.5,44.3,22.1])
         self.p3 = DoubleModel.objects.create(lista=[5.1,3.2,6.3,7.4])
+        self.p4 = DoubleModel.objects.create(lista=[])
     
     def test_double_array_contains(self):
         qs = DoubleModel.objects.filter(lista__contains=1.2)
@@ -28,7 +29,7 @@ class DoublePrecisionArrayFieldTest(TestCase):
 
     def test_double_array_distinct(self):
         qs = DoubleModel.objects.filter(lista__distinct=[11.5,44.3,22.1])
-        self.assertEqual(qs.count(), 2)
+        self.assertEqual(qs.count(), 3)
 
     def test_double_array_length(self):
         length = DoubleModel.objects.filter(id=self.p1.id).array_length(attr='lista')
@@ -50,6 +51,17 @@ class DoublePrecisionArrayFieldTest(TestCase):
         result = DoubleModel.objects.aggregate(total_length=ArrayLength('lista', sum=True))
         self.assertEqual(result['total_length'], 12.0)
 
+    def test_array_exact(self):
+        qs = DoubleModel.objects.filter(lista=[11.5,44.3,22.1])
+        self.assertEqual(qs.count(), 1)
+        qs = DoubleModel.objects.filter(lista=[11.5,44.3,22.1,4.1])
+        self.assertEqual(qs.count(), 0)
+
+    def test_array_exact_empty(self):
+        qs = DoubleModel.objects.filter(lista=[])
+        self.assertEqual(qs.count(), 1)
+
+
 class IntArrayFieldTest(TestCase):
     def setUp(self):
         IntModel.objects.all().delete()
@@ -59,6 +71,7 @@ class IntArrayFieldTest(TestCase):
         self.p4 = IntModel.objects.create(lista=[3,4,5,6,7,8])
         self.p5 = IntModel.objects.create(lista=[9,10,11,11,10])
         self.p6 = IntModel.objects.create(lista=[1,2,3,4,5])
+        self.p7 = IntModel.objects.create(lista=[])
     
     def test_int_array_indexexact(self):
         qs = IntModel.objects.filter(lista__indexexact=(0,1))
@@ -74,7 +87,7 @@ class IntArrayFieldTest(TestCase):
 
     def test_int_array_distinct(self):
         qs = IntModel.objects.filter(lista__distinct=[1,2,3,4,5])
-        self.assertEqual(qs.count(), 4)
+        self.assertEqual(qs.count(), 5)
 
     def test_int_array_length(self):
         length = IntModel.objects.filter(id=self.p1.id).array_length(attr='lista')
@@ -97,6 +110,16 @@ class IntArrayFieldTest(TestCase):
         result = IntModel.objects.aggregate(total_length=ArrayLength('lista', sum=True))
         self.assertEqual(result['total_length'], 30)
 
+    def test_array_exact(self):
+        qs = IntModel.objects.filter(lista=[5,3,6,7,8])
+        self.assertEqual(qs.count(), 1)
+        qs = IntModel.objects.filter(lista=[5,3,6,7,8,9,9])
+        self.assertEqual(qs.count(), 0)
+
+    def test_array_exact_empty(self):
+        qs = IntModel.objects.filter(lista=[])
+        self.assertEqual(qs.count(), 1)
+
 from django.db import connection
 from pprint import pprint
 
@@ -106,7 +129,8 @@ class TextArrayFieldTest(TestCase):
         self.p1 = TextModel.objects.create(lista=[u'hola', u'mundo'])
         self.p2 = TextModel.objects.create(lista=[u'hellow', u'world'])
         self.p3 = TextModel.objects.create(lista=[u'привет', u'моя', u'страна'])
-    
+        self.p4 = TextModel.objects.create(lista=[])
+
     def test_text_array_contains(self):
         qs = TextModel.objects.filter(lista__contains=u'mundo')
         self.assertEqual(qs.count(), 1)
@@ -120,7 +144,7 @@ class TextArrayFieldTest(TestCase):
 
     def test_text_array_distinct(self):
         qs = TextModel.objects.filter(lista__distinct=['hellow', 'world'])
-        self.assertEqual(qs.count(), 2)
+        self.assertEqual(qs.count(), 3)
 
     def test_text_array_length(self):
         length = TextModel.objects.filter(id=self.p3.id).array_length(attr='lista')
@@ -142,29 +166,39 @@ class TextArrayFieldTest(TestCase):
         result = TextModel.objects.aggregate(total_length=ArrayLength('lista', sum=True))
         self.assertEqual(result['total_length'], 7)
 
+    def test_array_exact(self):
+        qs = TextModel.objects.filter(lista=[u'hola', u'mundo'])
+        self.assertEqual(qs.count(), 1)
+        qs = TextModel.objects.filter(lista=[u'hola', u'mundo', u'no-match'])
+        self.assertEqual(qs.count(), 0)
+
+    def test_array_exact_empty(self):
+        qs = TextModel.objects.filter(lista=[])
+        self.assertEqual(qs.count(), 1)
 
 
 class VarcharArrayFieldTest(TestCase):
     def setUp(self):
         VarcharModel.objects.all().delete()
-        self.p1 = VarcharModel.objects.create(lista=['hola', 'mundo'])
-        self.p2 = VarcharModel.objects.create(lista=['hellow', 'world'])
-        self.p3 = VarcharModel.objects.create(lista=['привет', 'моя', 'страна'])
+        self.p1 = VarcharModel.objects.create(lista=[u'hola', u'mundo'])
+        self.p2 = VarcharModel.objects.create(lista=[u'hellow', u'world'])
+        self.p3 = VarcharModel.objects.create(lista=[u'привет', u'моя', u'страна'])
+        self.p4 = VarcharModel.objects.create(lista=[])
     
     def test_varchar_array_contains(self):
-        qs = VarcharModel.objects.filter(lista__contains='hola')
+        qs = VarcharModel.objects.filter(lista__contains=u'hola')
         self.assertEqual(qs.count(), 1)
 
         qs = VarcharModel.objects.filter(lista__contains=u'привет')
         self.assertEqual(qs.count(), 1)
 
     def test_varchar_array_overlap(self):
-        qs = VarcharModel.objects.filter(lista__overlap=['hola','world'])
+        qs = VarcharModel.objects.filter(lista__overlap=[u'hola', u'world'])
         self.assertEqual(qs.count(), 2)
 
     def test_varchar_array_distinct(self):
-        qs = VarcharModel.objects.filter(lista__distinct=['hellow', 'world'])
-        self.assertEqual(qs.count(), 2)
+        qs = VarcharModel.objects.filter(lista__distinct=[u'hellow', u'world'])
+        self.assertEqual(qs.count(), 3)
 
     def test_varchar_array_length(self):
         length = VarcharModel.objects.filter(id=self.p3.id).array_length(attr='lista')
@@ -185,6 +219,16 @@ class VarcharArrayFieldTest(TestCase):
 
         result = VarcharModel.objects.aggregate(total_length=ArrayLength('lista', sum=True))
         self.assertEqual(result['total_length'], 7)
+
+    def test_array_exact(self):
+        qs = VarcharModel.objects.filter(lista=[u'hola', u'mundo'])
+        self.assertEqual(qs.count(), 1)
+        qs = VarcharModel.objects.filter(lista=[u'hola', u'mundo', u'no-match'])
+        self.assertEqual(qs.count(), 0)
+
+    def test_array_exact_empty(self):
+        qs = VarcharModel.objects.filter(lista=[])
+        self.assertEqual(qs.count(), 1)
 
 
 from datetime import timedelta
