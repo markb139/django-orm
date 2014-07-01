@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from django.db.models.query import QuerySet, ValuesQuerySet, ValuesListQuerySet
-from django.db.models.query import ITER_CHUNK_SIZE
+try:
+    from django.db.models.query import ITER_CHUNK_SIZE
+except:
+    from django.db.models.sql.constants import GET_ITERATOR_CHUNK_SIZE as ITER_CHUNK_SIZE
 from django.db import backend, connection
 from django.conf import settings
 
